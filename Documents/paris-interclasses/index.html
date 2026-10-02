@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paris Interclasses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Saira+Condensed:wght@600;700;800&display=swap">
+<style>
+/* Layout : en-tête « tableau d'affichage », puis tableau du tournoi à gauche et ticket de pari à droite ; onglets pour les tickets et l'espace organisateur. */
+:root {
+  --bg: #eceff3;
+  --surface: #ffffff;
+  --surface-2: #f5f7fa;
+  --ink: #14202e;
+  --muted: #5b6878;
+  --line: #d3dae3;
+  --accent: #f2b705;
+  --accent-ink: #14202e;
+  --board: #14202e;
+  --board-ink: #f4f6f9;
+  --win: #17804a;
+  --win-bg: #e3f4ea;
+  --lose: #b8402c;
+  --lose-bg: #fbe9e5;
+  --wait: #7a6400;
+  --wait-bg: #fdf3cf;
+  --t-sjh: #2462c8;
+  --t-sjp: #c0392f;
+  --t-sjmb: #198a55;
+  --t-sjlp: #8048cc;
+  --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Barlow", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e151e; --surface: #16202c; --surface-2: #1c2836; --ink: #e7edf4; --muted: #94a2b3; --line: #2b3a4b;
+    --accent: #f5c22b; --accent-ink: #14202e; --board: #08101a; --board-ink: #f4f6f9;
+    --win: #45c77f; --win-bg: #143024; --lose: #f07a63; --lose-bg: #3a1c17; --wait: #f0cf5a; --wait-bg: #342c0e;
+    --t-sjh: #5b93f0; --t-sjp: #f06a5e; --t-sjmb: #3cc483; --t-sjlp: #b088f0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e151e; --surface: #16202c; --surface-2: #1c2836; --ink: #e7edf4; --muted: #94a2b3; --line: #2b3a4b;
+  --accent: #f5c22b; --accent-ink: #14202e; --board: #08101a; --board-ink: #f4f6f9;
+  --win: #45c77f; --win-bg: #143024; --lose: #f07a63; --lose-bg: #3a1c17; --wait: #f0cf5a; --wait-bg: #342c0e;
+  --t-sjh: #5b93f0; --t-sjp: #f06a5e; --t-sjmb: #3cc483; --t-sjlp: #b088f0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+[hidden] { display: none !important; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; }
+
+/* ---------- En-tête ---------- */
+.board {
+  background: var(--board);
+  color: var(--board-ink);
+  padding-block: 28px 0;
+  padding-top: calc(28px + env(safe-area-inset-top, 0px));
+}
+.board-top { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-end; justify-content: space-between; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin: 0 0 6px;
+}
+h1 {
+  font-family: var(--font-display); font-weight: 800; text-transform: uppercase;
+  font-size: clamp(40px, 7vw, 68px); line-height: .92; letter-spacing: .01em; margin: 0;
+  text-wrap: balance;
+}
+.rules { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.rule {
+  font-family: var(--font-mono); font-size: 13px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.22);
+}
+.rule strong { color: var(--accent); font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, auto)); gap: 4px 28px; }
+.stat-label { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; opacity: .7; }
+.stat-value { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+.tabs { display: flex; gap: 4px; margin-top: 26px; overflow-x: auto; }
+.tab {
+  background: transparent; border: 0; color: var(--board-ink); opacity: .72; cursor: pointer;
+  padding: 12px 18px; border-radius: var(--radius) var(--radius) 0 0;
+  font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: .04em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.tab:hover { opacity: 1; }
+.tab[aria-selected="true"] { background: var(--bg); color: var(--ink); opacity: 1; }
+.tab .count {
+  font-family: var(--font-mono); font-size: 12px; background: var(--accent); color: var(--accent-ink);
+  border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 2px;
+}
+
+main { padding-block: 28px 56px; }
+.panel[hidden] { display: none; }
+
+h2 {
+  font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  font-size: 26px; line-height: 1.1; margin: 0 0 14px; text-wrap: balance;
+}
+h3 { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: .03em; margin: 0; }
+.hint { color: var(--muted); font-size: 14px; margin: 0; }
+
+/* ---------- Mise en page « Parier » ---------- */
+.bet-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 28px; align-items: start; }
+@media (max-width: 960px) { .bet-layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Tableau du tournoi ---------- */
+.bracket { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); align-items: center; }
+.semis { display: grid; gap: 22px; }
+.link { position: relative; align-self: stretch; }
+.link::before {
+  content: ""; position: absolute; left: 0; right: 50%; top: 25%; bottom: 25%;
+  border: 2px solid var(--line); border-left: 0; border-radius: 0 8px 8px 0;
+}
+.link::after { content: ""; position: absolute; left: 50%; right: 0; top: 50%; border-top: 2px solid var(--line); }
+@media (max-width: 700px) {
+  .bracket { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .link { display: none; }
+}
+
+.match { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.match.final { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.match-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2);
+}
+.match-name { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 15px; }
+.chip {
+  font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+}
+.chip.open { background: var(--win-bg); color: var(--win); }
+.chip.closed { background: var(--wait-bg); color: var(--wait); }
+.chip.done { background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
+.chip.tbd { background: var(--surface); color: var(--muted); border: 1px dashed var(--line); }
+
+.side { display: grid; grid-template-columns: 6px minmax(0, 1fr) auto; gap: 0 12px; align-items: center; padding: 12px 14px 12px 0; }
+.side + .side { border-top: 1px solid var(--line); }
+.swatch { align-self: stretch; border-radius: 0 3px 3px 0; }
+.team-name { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 1; letter-spacing: .02em; }
+.team-name.tbd { color: var(--muted); font-weight: 600; font-size: 20px; }
+.team-meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.side.winner .team-name::after {
+  content: "Qualifié"; font-family: var(--font-body); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--win); background: var(--win-bg); border-radius: 999px; padding: 2px 8px; margin-left: 10px; vertical-align: 6px;
+}
+.match.final .side.winner .team-name::after { content: "Champion"; }
+.side.loser .team-name { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 2px; }
+
+.odds {
+  display: inline-flex; flex-direction: column; align-items: center; min-width: 74px;
+  padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2);
+  cursor: pointer; line-height: 1.1;
+}
+.odds b { font-family: var(--font-mono); font-size: 18px; font-weight: 600; }
+.odds span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.odds:hover:not(:disabled) { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.odds:hover:not(:disabled) span { color: var(--accent-ink); }
+.odds:disabled { cursor: not-allowed; opacity: .45; }
+.odds.picked { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.odds.picked span { color: var(--accent-ink); }
+
+.bracket-note { margin-top: 18px; }
+
+/* ---------- Ticket de pari ---------- */
+.slip {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  position: sticky; top: calc(16px + env(safe-area-inset-top, 0px));
+}
+.slip-head {
+  background: var(--accent); color: var(--accent-ink); padding: 12px 18px;
+  border-radius: var(--radius) var(--radius) 0 0; display: flex; justify-content: space-between; align-items: baseline;
+}
+.slip-head h2 { margin: 0; font-size: 24px; }
+.slip-head span { font-family: var(--font-mono); font-size: 13px; }
+.slip form, .slip .ticket { padding: 18px; display: grid; gap: 16px; }
+
+.field { display: grid; gap: 6px; }
+.field > label, .field > .label { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.row2 { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; }
+input[type="text"], input[type="number"], input[type="password"], input[type="search"], select {
+  width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface-2); min-height: 44px;
+}
+input:focus, select:focus { border-color: var(--ink); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent); }
+
+.team-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.team-pick label {
+  position: relative; display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; background: var(--surface-2);
+  font-family: var(--font-display); font-weight: 800; font-size: 22px;
+}
+.team-pick input { position: absolute; opacity: 0; pointer-events: none; }
+.team-pick .dot { width: 10px; height: 10px; border-radius: 50%; }
+.team-pick input:checked + span { color: var(--accent-ink); }
+.team-pick label:has(input:checked) { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.team-pick label:has(input:focus-visible) { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+.stake-wrap { position: relative; }
+.stake-wrap input { padding-right: 64px; font-family: var(--font-mono); font-size: 18px; }
+.stake-wrap .unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; font-weight: 600; }
+.quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick button {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; cursor: pointer;
+  font-family: var(--font-mono); font-size: 13px;
+}
+.quick button:hover { border-color: var(--ink); }
+
+.payout {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  border-top: 2px dashed var(--line); padding-top: 14px;
+}
+.payout .label { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.payout .calc { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.payout .amount { font-family: var(--font-display); font-weight: 800; font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; text-align: right; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface); cursor: pointer; font-weight: 600;
+}
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary {
+  background: var(--ink); color: var(--bg); border-color: var(--ink);
+  font-family: var(--font-display); font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+}
+.btn.primary:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.small { min-height: 34px; padding: 5px 12px; font-size: 14px; }
+.btn.danger { color: var(--lose); }
+.btn.danger:hover:not(:disabled) { border-color: var(--lose); }
+.btn.armed { background: var(--lose); color: #fff; border-color: var(--lose); }
+.btn.win { color: var(--win); }
+.btn.win:hover:not(:disabled) { border-color: var(--win); }
+
+.form-error { color: var(--lose); background: var(--lose-bg); border-radius: 8px; padding: 8px 12px; font-size: 14px; margin: 0; }
+
+.ticket { border-top: 0; }
+.ticket-code { font-family: var(--font-mono); font-size: 28px; font-weight: 600; letter-spacing: .06em; }
+.ticket dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; }
+.ticket dt { color: var(--muted); font-size: 14px; }
+.ticket dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.ticket .ok { color: var(--win); font-weight: 700; display: flex; gap: 8px; align-items: center; }
+
+/* ---------- Tickets ---------- */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.toolbar input { flex: 1 1 240px; }
+.toolbar select { flex: 0 1 220px; }
+.table-box { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); font-weight: 600; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.code { font-family: var(--font-mono); font-weight: 600; }
+.team-tag { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.team-tag i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.status { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; }
+.status.pending { background: var(--wait-bg); color: var(--wait); }
+.status.won { background: var(--win-bg); color: var(--win); }
+.status.paid { background: var(--surface-2); color: var(--win); border: 1px solid var(--win); }
+.status.lost { background: var(--lose-bg); color: var(--lose); }
+.empty { padding: 36px 20px; text-align: center; color: var(--muted); }
+.empty strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 4px; }
+
+/* ---------- Organisateur ---------- */
+.lock { max-width: 420px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; display: grid; gap: 14px; }
+.admin-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 900px) { .admin-grid { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 14px; align-content: start; }
+.card-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.ledger { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 14px; margin: 0; }
+.ledger dt { color: var(--muted); }
+.ledger dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.ledger .total { border-top: 1px solid var(--line); padding-top: 6px; }
+.pos { color: var(--win); }
+.neg { color: var(--lose); }
+.section-gap { margin-top: 36px; }
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.draw { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; }
+.draw .vs { font-family: var(--font-display); font-weight: 700; color: var(--muted); }
+.admin-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 8px; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); z-index: 10;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+footer { color: var(--muted); font-size: 13px; padding-block: 0 32px; }
+
+@media (max-width: 560px) {
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 14px; width: 100%; }
+  .stat-value { font-size: 22px; }
+  .team-name { font-size: 26px; }
+  .row2 { grid-template-columns: minmax(0, 1fr); }
+  .tab { padding: 10px 12px; font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="board">
+  <div class="wrap">
+    <div class="board-top">
+      <div>
+        <p class="eyebrow">Tournoi interclasses · élimination directe</p>
+        <h1>Paris<br>Interclasses</h1>
+        <div class="rules">
+          <span class="rule">Mise min. <strong>1 000 FCFA</strong></span>
+          <span class="rule">Cote fixe <strong>2,00</strong></span>
+          <span class="rule">Gain = <strong>mise × 2</strong></span>
+        </div>
+      </div>
+      <div class="stats" aria-live="polite">
+        <div><div class="stat-label">Paris</div><div class="stat-value" id="statCount">0</div></div>
+        <div><div class="stat-label">Total misé</div><div class="stat-value" id="statStaked">0</div></div>
+        <div><div class="stat-label">Gains à payer</div><div class="stat-value" id="statDue">0</div></div>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-parier" aria-controls="panel-parier" aria-selected="true">Parier</button>
+      <button class="tab" role="tab" id="tab-tickets" aria-controls="panel-tickets" aria-selected="false">Tickets<span class="count" id="tabCount">0</span></button>
+      <button class="tab" role="tab" id="tab-admin" aria-controls="panel-admin" aria-selected="false">Organisateur</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ PARIER ============ -->
+  <section class="panel" id="panel-parier" role="tabpanel" aria-labelledby="tab-parier">
+    <div class="bet-layout">
+      <div>
+        <h2>Tableau du tournoi</h2>
+        <div class="bracket" id="bracket"></div>
+        <p class="hint bracket-note">Touchez la cote d'une équipe pour la mettre sur le ticket. La finale s'ouvre aux paris dès que les deux demi-finales sont jouées.</p>
+      </div>
+
+      <aside class="slip" id="slip" aria-label="Ticket de pari">
+        <div class="slip-head"><h2>Ticket</h2><span>Cote 2,00</span></div>
+
+        <form id="betForm" novalidate>
+          <div class="row2">
+            <div class="field">
+              <label for="fName">Nom du parieur</label>
+              <input type="text" id="fName" autocomplete="off" maxlength="40" placeholder="Ex. Awa Koné">
+            </div>
+            <div class="field">
+              <label for="fClass">Classe</label>
+              <input type="text" id="fClass" autocomplete="off" maxlength="15" placeholder="Ex. 3e B">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="fMatch">Match</label>
+            <select id="fMatch"></select>
+          </div>
+
+          <div class="field">
+            <span class="label" id="teamLabel">Équipe gagnante</span>
+            <div class="team-pick" id="fTeams" role="radiogroup" aria-labelledby="teamLabel"></div>
+          </div>
+
+          <div class="field">
+            <label for="fStake">Mise</label>
+            <div class="stake-wrap">
+              <input type="number" id="fStake" inputmode="numeric" min="1000" step="50" value="1000">
+              <span class="unit">FCFA</span>
+            </div>
+            <div class="quick" id="quick">
+              <button type="button" data-v="1000">1 000</button>
+              <button type="button" data-v="2000">2 000</button>
+              <button type="button" data-v="5000">5 000</button>
+              <button type="button" data-v="10000">10 000</button>
+            </div>
+          </div>
+
+          <div class="payout">
+            <div>
+              <div class="label">Gain si victoire</div>
+              <div class="calc" id="calc">1 000 × 2,00</div>
+            </div>
+            <div class="amount" id="payout">2 000 FCFA</div>
+          </div>
+
+          <p class="form-error" id="formError" role="alert" hidden></p>
+          <button type="submit" class="btn primary" id="submitBet">Valider le pari</button>
+        </form>
+
+        <div class="ticket" id="ticket" hidden>
+          <div class="ok">✓ Pari enregistré</div>
+          <div>
+            <div class="hint">Numéro du ticket — à noter ou photographier</div>
+            <div class="ticket-code" id="tCode"></div>
+          </div>
+          <dl id="tDetails"></dl>
+          <button type="button" class="btn primary" id="newBet">Nouveau pari</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ TICKETS ============ -->
+  <section class="panel" id="panel-tickets" role="tabpanel" aria-labelledby="tab-tickets" hidden>
+    <h2>Tickets enregistrés</h2>
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="Rechercher un nom, une classe ou un numéro de ticket" aria-label="Rechercher">
+      <select id="filter" aria-label="Filtrer par statut">
+        <option value="all">Tous les statuts</option>
+        <option value="pending">En attente</option>
+        <option value="won">Gagnés, à payer</option>
+        <option value="paid">Payés</option>
+        <option value="lost">Perdus</option>
+      </select>
+    </div>
+    <div class="table-box">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticket</th><th>Parieur</th><th>Classe</th><th>Match</th><th>Équipe</th>
+            <th class="num">Mise</th><th class="num">Gain</th><th>Statut</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="emptyRows" hidden></div>
+    </div>
+    <p class="hint" style="margin-top:12px">Le paiement d'un ticket gagnant et la suppression d'un ticket se font depuis l'espace Organisateur (déverrouillé).</p>
+  </section>
+
+  <!-- ============ ORGANISATEUR ============ -->
+  <section class="panel" id="panel-admin" role="tabpanel" aria-labelledby="tab-admin" hidden>
+    <form class="lock" id="lockForm" novalidate>
+      <h2 style="margin:0">Espace organisateur</h2>
+      <p class="hint">Saisissez le code pour déclarer les résultats, fermer les paris et payer les gagnants. Code par défaut : <b>1234</b>. Changez-le dès la première connexion.</p>
+      <div class="field">
+        <label for="pin">Code</label>
+        <input type="password" id="pin" inputmode="numeric" autocomplete="off">
+      </div>
+      <p class="form-error" id="pinError" role="alert" hidden></p>
+      <button type="submit" class="btn primary">Déverrouiller</button>
+    </form>
+
+    <div id="admin" hidden>
+      <div class="admin-bar">
+        <h2 style="margin:0">Résultats et bilan</h2>
+        <button type="button" class="btn small" id="lockBtn">Verrouiller</button>
+      </div>
+      <div class="admin-grid" id="adminMatches"></div>
+
+      <h2 class="section-gap">Réglages</h2>
+      <div class="tools-grid">
+        <div class="card">
+          <h3>Tirage des demi-finales</h3>
+          <p class="hint" id="drawHint"></p>
+          <div class="draw"><select id="d1a" aria-label="Demi-finale 1, équipe 1"></select><span class="vs">VS</span><select id="d1b" aria-label="Demi-finale 1, équipe 2"></select></div>
+          <div class="draw"><select id="d2a" aria-label="Demi-finale 2, équipe 1"></select><span class="vs">VS</span><select id="d2b" aria-label="Demi-finale 2, équipe 2"></select></div>
+          <p class="form-error" id="drawError" role="alert" hidden></p>
+          <div class="btn-row"><button type="button" class="btn small" id="saveDraw">Enregistrer le tirage</button></div>
+        </div>
+
+        <div class="card">
+          <h3>Sauvegarde</h3>
+          <p class="hint">Les paris sont stockés dans ce navigateur, sur cet appareil. Exportez régulièrement un fichier de sauvegarde.</p>
+          <div class="btn-row">
+            <button type="button" class="btn small" id="exportBtn">Exporter (.json)</button>
+            <label class="btn small" for="importFile" style="cursor:pointer">Importer un fichier</label>
+            <input type="file" id="importFile" accept="application/json,.json" hidden>
+          </div>
+          <p class="hint">L'import remplace toutes les données actuelles.</p>
+        </div>
+
+        <div class="card">
+          <h3>Code organisateur</h3>
+          <div class="field">
+            <label for="newPin">Nouveau code (4 chiffres ou plus)</label>
+            <input type="password" id="newPin" inputmode="numeric" autocomplete="new-password">
+          </div>
+          <div class="btn-row"><button type="button" class="btn small" id="savePin">Changer le code</button></div>
+        </div>
+
+        <div class="card">
+          <h3>Tout effacer</h3>
+          <p class="hint">Supprime tous les tickets et résultats. Tapez EFFACER pour confirmer.</p>
+          <input type="text" id="resetWord" aria-label="Tapez EFFACER" autocomplete="off">
+          <div class="btn-row"><button type="button" class="btn small danger" id="resetBtn">Effacer le tournoi</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  Paris Interclasses · cote fixe 2,00 · mise minimale 1 000 FCFA. Les données restent sur cet appareil.
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Constantes ---------- */
+  var TEAMS = ["SJH", "SJP", "SJMB", "SJLP"];
+  var TEAM_COLOR = { SJH: "var(--t-sjh)", SJP: "var(--t-sjp)", SJMB: "var(--t-sjmb)", SJLP: "var(--t-sjlp)" };
+  var ODDS = 2;
+  var MIN_STAKE = 1000;
+  var KEY = "paris-interclasses-v1";
+  var MATCH_IDS = ["sf1", "sf2", "final"];
+  var MATCH_LABEL = { sf1: "Demi-finale 1", sf2: "Demi-finale 2", final: "Finale" };
+
+  function defaultState() {
+    return {
+      version: 1,
+      pin: "1234",
+      seq: 0,
+      matches: {
+        sf1: { a: "SJH", b: "SJP", winner: null, open: true },
+        sf2: { a: "SJMB", b: "SJLP", winner: null, open: true },
+        final: { winner: null, open: true }
+      },
+      bets: []
+    };
+  }
+
+  function isValidState(s) {
+    return s && typeof s === "object" && s.matches && s.matches.sf1 && s.matches.sf2 && s.matches.final && Array.isArray(s.bets);
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (isValidState(s)) return s;
+      }
+    } catch (e) { /* stockage indisponible */ }
+    return defaultState();
+  }
+
+  var state = load();
+  var unlocked = false;
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { toast("Sauvegarde impossible dans ce navigateur. Exportez les données."); }
+  }
+
+  /* ---------- Outils ---------- */
+  var $ = function (id) { return document.getElementById(id); };
+  var nf = new Intl.NumberFormat("fr-FR");
+  function money(n) { return nf.format(n) + " FCFA"; }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  var toastTimer;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  }
+
+  /* ---------- Règles du tournoi ---------- */
+  function teamsOf(id) {
+    if (id === "final") return [state.matches.sf1.winner, state.matches.sf2.winner];
+    return [state.matches[id].a, state.matches[id].b];
+  }
+  function isReady(id) { var t = teamsOf(id); return !!(t[0] && t[1]); }
+  function canBet(id) { var m = state.matches[id]; return isReady(id) && m.open && !m.winner; }
+  function betsOn(id) { return state.bets.filter(function (b) { return b.match === id; }); }
+  function stakeOn(id, team) {
+    return betsOn(id).reduce(function (s, b) { return b.team === team ? s + b.stake : s; }, 0);
+  }
+  function betStatus(b) {
+    var w = state.matches[b.match].winner;
+    if (!w) return "pending";
+    if (b.team === w) return b.paid ? "paid" : "won";
+    return "lost";
+  }
+  var STATUS_LABEL = { pending: "En attente", won: "Gagné · à payer", paid: "Payé", lost: "Perdu" };
+
+  function matchState(id) {
+    var m = state.matches[id];
+    if (!isReady(id)) return { cls: "tbd", label: "À venir" };
+    if (m.winner) return { cls: "done", label: "Terminé" };
+    if (!m.open) return { cls: "closed", label: "Paris fermés" };
+    return { cls: "open", label: "Paris ouverts" };
+  }
+
+  /* ---------- Rendu : en-tête ---------- */
+  function renderStats() {
+    var staked = 0, due = 0;
+    state.bets.forEach(function (b) {
+      staked += b.stake;
+      if (betStatus(b) === "won") due += b.stake * ODDS;
+    });
+    $("statCount").textContent = nf.format(state.bets.length);
+    $("statStaked").textContent = money(staked);
+    $("statDue").textContent = money(due);
+    $("tabCount").textContent = state.bets.length;
+  }
+
+  /* ---------- Rendu : tableau ---------- */
+  var pick = { match: null, team: null };
+
+  function sideHTML(id, team, winner, placeholder) {
+    var cls = "side";
+    if (winner && team) cls += team === winner ? " winner" : " loser";
+    if (!team) {
+      return '<div class="' + cls + '"><span class="swatch" style="background:var(--line)"></span>' +
+        '<div><div class="team-name tbd">' + placeholder + '</div><div class="team-meta">En attente du résultat</div></div><span></span></div>';
+    }
+    var total = stakeOn(id, team);
+    var n = betsOn(id).filter(function (b) { return b.team === team; }).length;
+    var disabled = canBet(id) ? "" : " disabled";
+    var picked = pick.match === id && pick.team === team ? " picked" : "";
+    return '<div class="' + cls + '"><span class="swatch" style="background:' + TEAM_COLOR[team] + '"></span>' +
+      '<div><div class="team-name">' + esc(team) + '</div>' +
+      '<div class="team-meta">' + n + ' pari' + (n > 1 ? "s" : "") + ' · ' + money(total) + '</div></div>' +
+      '<button type="button" class="odds' + picked + '" data-match="' + id + '" data-team="' + esc(team) + '"' + disabled +
+      ' aria-label="Parier sur ' + esc(team) + ', cote 2,00"><b>2,00</b><span>Cote</span></button></div>';
+  }
+
+  function matchHTML(id) {
+    var t = teamsOf(id);
+    var m = state.matches[id];
+    var st = matchState(id);
+    var a = sideHTML(id, t[0], m.winner, "Vainqueur DF1");
+    var b = sideHTML(id, t[1], m.winner, "Vainqueur DF2");
+    return '<article class="match' + (id === "final" ? " final" : "") + '">' +
+      '<div class="match-head"><span class="match-name">' + MATCH_LABEL[id] + '</span><span class="chip ' + st.cls + '">' + st.label + '</span></div>' +
+      a + b + '</article>';
+  }
+
+  function renderBracket() {
+    $("bracket").innerHTML =
+      '<div class="semis">' + matchHTML("sf1") + matchHTML("sf2") + '</div>' +
+      '<div class="link" aria-hidden="true"></div>' +
+      '<div>' + matchHTML("final") + '</div>';
+  }
+
+  $("bracket").addEventListener("click", function (e) {
+    var btn = e.target.closest(".odds");
+    if (!btn || btn.disabled) return;
+    hideTicket();
+    pick.match = btn.dataset.match;
+    pick.team = btn.dataset.team;
+    $("fMatch").value = pick.match;
+    renderTeamPick();
+    renderBracket();
+    updatePayout();
+    if (window.matchMedia("(max-width: 960px)").matches) {
+      $("slip").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (!$("fName").value.trim()) $("fName").focus(); else $("fStake").focus();
+  });
+
+  /* ---------- Rendu : ticket de pari ---------- */
+  function renderMatchSelect() {
+    var sel = $("fMatch");
+    var openIds = MATCH_IDS.filter(canBet);
+    var html = openIds.map(function (id) {
+      var t = teamsOf(id);
+      return '<option value="' + id + '">' + MATCH_LABEL[id] + ' · ' + esc(t[0]) + ' – ' + esc(t[1]) + '</option>';
+    }).join("");
+    if (!openIds.length) html = '<option value="">Aucun match ouvert aux paris</option>';
+    sel.innerHTML = html;
+    if (pick.match && openIds.indexOf(pick.match) !== -1) sel.value = pick.match;
+    else { pick.match = openIds[0] || null; pick.team = null; }
+    sel.disabled = !openIds.length;
+    $("submitBet").disabled = !openIds.length;
+  }
+
+  function renderTeamPick() {
+    var id = $("fMatch").value;
+    var box = $("fTeams");
+    if (!id) { box.innerHTML = '<p class="hint" style="grid-column:1/-1">Les paris rouvriront quand un match sera disponible.</p>'; return; }
+    pick.match = id;
+    var t = teamsOf(id);
+    if (t.indexOf(pick.team) === -1) pick.team = null;
+    box.innerHTML = t.map(function (team, i) {
+      return '<label><input type="radio" name="team" id="team' + i + '" value="' + esc(team) + '"' + (pick.team === team ? " checked" : "") + '>' +
+        '<i class="dot" style="background:' + TEAM_COLOR[team] + '"></i><span>' + esc(team) + '</span></label>';
+    }).join("");
+  }
+
+  $("fMatch").addEventListener("change", function () {
+    pick.match = this.value; pick.team = null;
+    renderTeamPick(); renderBracket(); clearError();
+  });
+  $("fTeams").addEventListener("change", function (e) {
+    if (e.target.name === "team") { pick.team = e.target.value; renderBracket(); clearError(); }
+  });
+
+  function stakeValue() {
+    var v = Number($("fStake").value);
+    return isFinite(v) ? Math.floor(v) : 0;
+  }
+  function updatePayout() {
+    var s = stakeValue();
+    $("calc").textContent = nf.format(Math.max(s, 0)) + " × 2,00";
+    $("payout").textContent = money(Math.max(s, 0) * ODDS);
+  }
+  $("fStake").addEventListener("input", function () { updatePayout(); clearError(); });
+  $("quick").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-v]");
+    if (!b) return;
+    $("fStake").value = b.dataset.v;
+    updatePayout(); clearError();
+  });
+
+  function showError(msg) { var el = $("formError"); el.textContent = msg; el.hidden = false; }
+  function clearError() { $("formError").hidden = true; }
+
+  $("betForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = $("fName").value.trim().replace(/\s+/g, " ");
+    var classe = $("fClass").value.trim();
+    var id = $("fMatch").value;
+    var stake = stakeValue();
+    var raw = Number($("fStake").value);
+
+    if (!name) { showError("Indiquez le nom du parieur."); $("fName").focus(); return; }
+    if (!id || !canBet(id)) { showError("Ce match n'est plus ouvert aux paris."); return; }
+    if (!pick.team || teamsOf(id).indexOf(pick.team) === -1) { showError("Choisissez l'équipe sur laquelle parier."); return; }
+    if (!isFinite(raw) || raw !== stake) { showError("La mise doit être un nombre entier de FCFA."); $("fStake").focus(); return; }
+    if (stake < MIN_STAKE) { showError("La mise minimale est de 1 000 FCFA."); $("fStake").focus(); return; }
+
+    state.seq = (state.seq || 0) + 1;
+    var bet = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      code: "IC-" + String(state.seq).padStart(4, "0"),
+      name: name,
+      classe: classe,
+      match: id,
+      team: pick.team,
+      stake: stake,
+      at: new Date().toISOString(),
+      paid: false
+    };
+    state.bets.push(bet);
+    save();
+    showTicket(bet);
+    $("fName").value = ""; $("fClass").value = ""; $("fStake").value = MIN_STAKE;
+    pick.team = null;
+    renderAll();
+    toast("Pari " + bet.code + " enregistré");
+  });
+
+  function showTicket(b) {
+    var t = teamsOf(b.match);
+    $("tCode").textContent = b.code;
+    $("tDetails").innerHTML =
+      "<dt>Parieur</dt><dd>" + esc(b.name) + (b.classe ? " (" + esc(b.classe) + ")" : "") + "</dd>" +
+      "<dt>Match</dt><dd>" + MATCH_LABEL[b.match] + " · " + esc(t[0]) + " – " + esc(t[1]) + "</dd>" +
+      "<dt>Équipe choisie</dt><dd>" + esc(b.team) + "</dd>" +
+      "<dt>Mise</dt><dd>" + money(b.stake) + "</dd>" +
+      "<dt>Cote</dt><dd>2,00</dd>" +
+      "<dt>Gain si victoire</dt><dd>" + money(b.stake * ODDS) + "</dd>" +
+      "<dt>Heure</dt><dd>" + new Date(b.at).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }) + "</dd>";
+    $("betForm").hidden = true;
+    $("ticket").hidden = false;
+  }
+  function hideTicket() { $("ticket").hidden = true; $("betForm").hidden = false; }
+  $("newBet").addEventListener("click", function () { hideTicket(); $("fName").focus(); });
+
+  /* ---------- Rendu : liste des tickets ---------- */
+  function renderTickets() {
+    var q = $("search").value.trim().toLowerCase();
+    var f = $("filter").value;
+    var list = state.bets.slice().reverse().filter(function (b) {
+      if (f !== "all" && betStatus(b) !== f) return false;
+      if (!q) return true;
+      return (b.name + " " + (b.classe || "") + " " + b.code).toLowerCase().indexOf(q) !== -1;
+    });
+    $("rows").innerHTML = list.map(function (b) {
+      var st = betStatus(b);
+      var action = "";
+      if (unlocked) {
+        if (st === "won") action = '<button type="button" class="btn small win" data-act="pay" data-id="' + b.id + '">Marquer payé</button>';
+        else if (st === "paid") action = '<button type="button" class="btn small" data-act="unpay" data-id="' + b.id + '">Annuler paiement</button>';
+        else if (st === "pending") action = '<button type="button" class="btn small danger" data-act="del" data-id="' + b.id + '">Supprimer</button>';
+      }
+      return "<tr>" +
+        '<td class="code">' + esc(b.code) + "</td>" +
+        "<td>" + esc(b.name) + "</td>" +
+        "<td>" + esc(b.classe || "—") + "</td>" +
+        "<td>" + MATCH_LABEL[b.match] + "</td>" +
+        '<td><span class="team-tag"><i style="background:' + TEAM_COLOR[b.team] + '"></i>' + esc(b.team) + "</span></td>" +
+        '<td class="num">' + money(b.stake) + "</td>" +
+        '<td class="num">' + money(b.stake * ODDS) + "</td>" +
+        '<td><span class="status ' + st + '">' + STATUS_LABEL[st] + "</span></td>" +
+        "<td>" + (action || '<span class="hint">—</span>') + "</td>" +
+        "</tr>";
+    }).join("");
+    var empty = $("emptyRows");
+    if (!state.bets.length) {
+      empty.innerHTML = "<strong>Aucun pari pour l'instant</strong>Les tickets apparaîtront ici dès le premier pari validé dans l'onglet Parier.";
+      empty.hidden = false;
+    } else if (!list.length) {
+      empty.innerHTML = "<strong>Aucun ticket ne correspond</strong>Modifiez la recherche ou le filtre de statut.";
+      empty.hidden = false;
+    } else empty.hidden = true;
+  }
+  $("search").addEventListener("input", renderTickets);
+  $("filter").addEventListener("change", renderTickets);
+
+  $("rows").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-act]");
+    if (!btn || !unlocked) return;
+    var bet = state.bets.find(function (b) { return b.id === btn.dataset.id; });
+    if (!bet) return;
+    var act = btn.dataset.act;
+    if (act === "pay") { bet.paid = true; save(); renderAll(); toast(bet.code + " payé : " + money(bet.stake * ODDS)); }
+    else if (act === "unpay") { bet.paid = false; save(); renderAll(); toast("Paiement de " + bet.code + " annulé"); }
+    else if (act === "del") {
+      armThen(btn, "Confirmer ?", function () {
+        state.bets = state.bets.filter(function (b) { return b.id !== bet.id; });
+        save(); renderAll(); toast("Ticket " + bet.code + " supprimé");
+      });
+    }
+  });
+
+  /* Double clic de confirmation (les fenêtres confirm() ne sont pas utilisées) */
+  function armThen(btn, label, fn) {
+    if (btn.dataset.armed === "1") { fn(); return; }
+    var old = btn.textContent;
+    btn.dataset.armed = "1";
+    btn.classList.add("armed");
+    btn.textContent = label;
+    setTimeout(function () {
+      if (!document.body.contains(btn)) return;
+      btn.dataset.armed = "";
+      btn.classList.remove("armed");
+      btn.textContent = old;
+    }, 3500);
+  }
+
+  /* ---------- Organisateur ---------- */
+  $("lockForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if ($("pin").value === String(state.pin)) {
+      unlocked = true;
+      $("pin").value = "";
+      $("pinError").hidden = true;
+      renderAll();
+    } else {
+      $("pinError").textContent = "Code incorrect. Réessayez.";
+      $("pinError").hidden = false;
+    }
+  });
+  $("lockBtn").addEventListener("click", function () { unlocked = false; renderAll(); });
+
+  function ledgerHTML(id) {
+    var t = teamsOf(id);
+    var m = state.matches[id];
+    var total = betsOn(id).reduce(function (s, b) { return s + b.stake; }, 0);
+    var rows = "";
+    t.forEach(function (team) {
+      if (team) rows += "<dt>Misé sur " + esc(team) + "</dt><dd>" + money(stakeOn(id, team)) + "</dd>";
+    });
+    rows += "<dt>Total encaissé</dt><dd>" + money(total) + "</dd>";
+    if (m.winner) {
+      var payout = stakeOn(id, m.winner) * ODDS;
+      var res = total - payout;
+      rows += "<dt>Gains à verser</dt><dd>" + money(payout) + "</dd>";
+      rows += '<dt class="total">Bénéfice du guichet</dt><dd class="total ' + (res >= 0 ? "pos" : "neg") + '">' + (res > 0 ? "+" : "") + money(res) + "</dd>";
+    } else if (isReady(id)) {
+      var worst = total - Math.max(stakeOn(id, t[0]), stakeOn(id, t[1])) * ODDS;
+      rows += '<dt class="total">Pire cas pour le guichet</dt><dd class="total ' + (worst >= 0 ? "pos" : "neg") + '">' + (worst > 0 ? "+" : "") + money(worst) + "</dd>";
+    }
+    return '<dl class="ledger">' + rows + "</dl>";
+  }
+
+  function canUndo(id) {
+    if (id === "final") return true;
+    var f = state.matches.final;
+    return !f.winner && betsOn("final").length === 0;
+  }
+
+  function renderAdmin() {
+    $("lockForm").hidden = unlocked;
+    $("admin").hidden = !unlocked;
+    if (!unlocked) return;
+
+    $("adminMatches").innerHTML = MATCH_IDS.map(function (id) {
+      var m = state.matches[id];
+      var t = teamsOf(id);
+      var st = matchState(id);
+      var body = "";
+      if (!isReady(id)) {
+        body = '<p class="hint">Déclarez d\'abord les vainqueurs des deux demi-finales.</p>';
+      } else if (m.winner) {
+        body = "<p>Vainqueur : <b>" + esc(m.winner) + "</b></p>" +
+          '<div class="btn-row"><button type="button" class="btn small danger" data-adm="undo" data-match="' + id + '"' + (canUndo(id) ? "" : " disabled") + '>Annuler le résultat</button></div>' +
+          (canUndo(id) ? "" : '<p class="hint">Impossible : la finale a déjà des paris ou un résultat.</p>');
+      } else {
+        body = '<div class="btn-row">' +
+          '<button type="button" class="btn small" data-adm="toggle" data-match="' + id + '">' + (m.open ? "Fermer les paris" : "Rouvrir les paris") + "</button></div>" +
+          '<div class="btn-row">' + t.map(function (team) {
+            return '<button type="button" class="btn small win" data-adm="win" data-match="' + id + '" data-team="' + esc(team) + '">' + esc(team) + " gagne</button>";
+          }).join("") + "</div>" +
+          '<p class="hint">Fermez les paris au coup d\'envoi. Un clic sur « gagne » demande une confirmation.</p>';
+      }
+      return '<div class="card"><div class="card-head"><h3>' + MATCH_LABEL[id] + '</h3><span class="chip ' + st.cls + '">' + st.label + "</span></div>" +
+        (isReady(id) ? '<p style="margin:0;font-family:var(--font-display);font-weight:800;font-size:24px">' + esc(t[0]) + ' <span class="hint" style="font-size:16px">vs</span> ' + esc(t[1]) + "</p>" : "") +
+        body + ledgerHTML(id) + "</div>";
+    }).join("");
+
+    // Tirage
+    var locked = state.bets.length > 0 || state.matches.sf1.winner || state.matches.sf2.winner;
+    var opts = TEAMS.map(function (t) { return '<option value="' + t + '">' + t + "</option>"; }).join("");
+    [["d1a", "sf1", "a"], ["d1b", "sf1", "b"], ["d2a", "sf2", "a"], ["d2b", "sf2", "b"]].forEach(function (x) {
+      var el = $(x[0]);
+      el.innerHTML = opts;
+      el.value = state.matches[x[1]][x[2]];
+      el.disabled = !!locked;
+    });
+    $("saveDraw").disabled = !!locked;
+    $("drawHint").textContent = locked
+      ? "Le tirage est verrouillé : des paris ou des résultats existent déjà."
+      : "Modifiable tant qu'aucun pari n'a été enregistré.";
+  }
+
+  $("adminMatches").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-adm]");
+    if (!btn || !unlocked) return;
+    var id = btn.dataset.match;
+    var m = state.matches[id];
+    var act = btn.dataset.adm;
+    if (act === "toggle") {
+      m.open = !m.open; save(); renderAll();
+      toast(MATCH_LABEL[id] + (m.open ? " : paris rouverts" : " : paris fermés"));
+    } else if (act === "win") {
+      var team = btn.dataset.team;
+      armThen(btn, "Confirmer : " + team + " gagne ?", function () {
+        m.winner = team; m.open = false;
+        save();
+        if (id !== "final" && state.matches.sf1.winner && state.matches.sf2.winner) state.matches.final.open = true;
+        renderAll();
+        toast(team + " remporte la " + MATCH_LABEL[id].toLowerCase());
+      });
+    } else if (act === "undo") {
+      if (!canUndo(id)) return;
+      armThen(btn, "Confirmer l'annulation ?", function () {
+        m.winner = null; m.open = false;
+        state.bets.forEach(function (b) { if (b.match === id) b.paid = false; });
+        save(); renderAll();
+        toast("Résultat annulé. Les paris de ce match restent fermés.");
+      });
+    }
+  });
+
+  $("saveDraw").addEventListener("click", function () {
+    var v = [$("d1a").value, $("d1b").value, $("d2a").value, $("d2b").value];
+    var unique = v.filter(function (x, i) { return v.indexOf(x) === i; });
+    if (unique.length !== 4) {
+      $("drawError").textContent = "Chaque équipe doit apparaître une seule fois.";
+      $("drawError").hidden = false;
+      return;
+    }
+    $("drawError").hidden = true;
+    state.matches.sf1.a = v[0]; state.matches.sf1.b = v[1];
+    state.matches.sf2.a = v[2]; state.matches.sf2.b = v[3];
+    save(); renderAll(); toast("Tirage enregistré");
+  });
+
+  $("savePin").addEventListener("click", function () {
+    var p = $("newPin").value.trim();
+    if (!/^\d{4,}$/.test(p)) { toast("Le code doit contenir au moins 4 chiffres."); return; }
+    state.pin = p; $("newPin").value = ""; save(); toast("Code organisateur modifié");
+  });
+
+  $("exportBtn").addEventListener("click", function () {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "paris-interclasses-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    toast("Fichier de sauvegarde exporté");
+  });
+
+  $("importFile").addEventListener("change", function () {
+    var file = this.files && this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var s = JSON.parse(reader.result);
+        if (!isValidState(s)) throw new Error("format");
+        state = s; save(); pick = { match: null, team: null }; renderAll();
+        toast("Données importées : " + s.bets.length + " tickets");
+      } catch (err) { toast("Ce fichier n'est pas une sauvegarde Paris Interclasses valide."); }
+    };
+    reader.readAsText(file);
+    this.value = "";
+  });
+
+  $("resetBtn").addEventListener("click", function () {
+    if ($("resetWord").value.trim().toUpperCase() !== "EFFACER") { toast("Tapez EFFACER pour confirmer."); return; }
+    var pin = state.pin;
+    state = defaultState(); state.pin = pin;
+    $("resetWord").value = "";
+    pick = { match: null, team: null };
+    save(); hideTicket(); renderAll(); toast("Tournoi remis à zéro");
+  });
+
+  /* ---------- Onglets ---------- */
+  var tabs = ["parier", "tickets", "admin"];
+  function showTab(name) {
+    tabs.forEach(function (t) {
+      $("tab-" + t).setAttribute("aria-selected", t === name ? "true" : "false");
+      $("panel-" + t).hidden = t !== name;
+    });
+    try { sessionStorage.setItem(KEY + "-tab", name); } catch (e) {}
+  }
+  tabs.forEach(function (t) { $("tab-" + t).addEventListener("click", function () { showTab(t); }); });
+
+  /* ---------- Rendu global ---------- */
+  function renderAll() {
+    renderStats();
+    renderMatchSelect();
+    renderTeamPick();
+    renderBracket();
+    renderTickets();
+    renderAdmin();
+    updatePayout();
+  }
+
+  renderAll();
+  try {
+    var saved = sessionStorage.getItem(KEY + "-tab");
+    if (tabs.indexOf(saved) !== -1) showTab(saved);
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
